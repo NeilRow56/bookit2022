@@ -1,8 +1,10 @@
 import Room from '../models/room'
+import ErrorHandler from '../utils/errorHandler'
+import catchAsyncErrors from '../middlewares/catchAsyncErrors'
 
 //Get all rooms => /api/rooms
 
-const allRooms = async (req, res) => {
+const allRooms = catchAsyncErrors(async (req, res) => {
 
     const rooms = await Room.find()
     res.status(200).json({
@@ -10,80 +12,46 @@ const allRooms = async (req, res) => {
         count: rooms.length,
         rooms
     })
-
-    try {
-        
-    } catch (error) {
-        res.status(400).json({
-            error:error.message
-        })
-        
-    }
-   
-}
+})
 
 //Create new room => /api/rooms
 
-const newRoom = async (req, res ) => {
+const newRoom = catchAsyncErrors(async (req, res ) => {
     
 
-    try {
+    
         const room = await Room.create(req.body)
         res.status(200).json({
             success:true,
             room
-        })
-    } catch (error) {
-        res.status(400).json({
-            success: false,
-            error: error.message
-        })
-    }
-
-    
-}
+        })   
+})
 
 //GET single room details => /api/rooms/:id
+const getSingleRoom = catchAsyncErrors(async (req, res, next) => {
 
-const getSingleRoom = async (req, res ) => {
-    
+    const room = await Room.findById(req.query.id);
 
-    try {
-        const room = await Room.findById(req.query.id)
-
-        if(!room) {
-            return res.status(404).json({
-                success: false,
-                error: 'Room not found with this ID'
-            })
-        }
-
-        res.status(200).json({
-            success:true,
-            room
-        })
-    } catch (error) {
-        res.status(400).json({
-            success: false,
-            error: error.message
-        })
+    if (!room) {
+        return next(new ErrorHandler('Room not found with this ID', 404))
     }
 
-    
-}
+    res.status(200).json({
+        success: true,
+        room
+    })
+})
+
 //Update  room details => /api/rooms/:id
 
-const updateRoom = async (req, res ) => {
+const updateRoom = catchAsyncErrors(async (req, res ) => {
     
 
-    try {
+   
         let room = await Room.findById(req.query.id)
 
         if(!room) {
-            return res.status(404).json({
-                success: false,
-                error: 'Room not found with this ID'
-            })
+            return next(new ErrorHandler('Room not found with this ID', 404 ))
         }
 
         room = await Room.findByIdAndUpdate(req.query.id, req.body, {
@@ -94,29 +62,18 @@ const updateRoom = async (req, res ) => {
         res.status(200).json({
             success:true,
             room
-        })
-    } catch (error) {
-        res.status(400).json({
-            success: false,
-            error: error.message
-        })
-    }
-
-    
-}
+        })    
+})
 //Delete  room  => /api/rooms/:id
 
-const deleteRoom = async (req, res ) => {
+const deleteRoom = catchAsyncErrors(async (req, res ) => {
     
 
-    try {
+  
         const room = await Room.findById(req.query.id)
 
         if(!room) {
-            return res.status(404).json({
-                success: false,
-                error: 'Room not found with this ID'
-            })
+            return next(new ErrorHandler('Room not found with this ID', 404 ))
         }
 
         await room.remove()
@@ -125,16 +82,11 @@ const deleteRoom = async (req, res ) => {
             success:true,
             message: 'Room is deleted'
         })
-        
-    } catch (error) {
-        res.status(400).json({
-            success: false,
-            error: error.message
-        })
-    }
+
+   
 
     
-}
+})
 
 export {
     allRooms,
